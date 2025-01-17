@@ -20,7 +20,19 @@ struct Uniform {
 };
 
 struct Settings {
-  vec4 setting;
+public:
+  vec4 color;
+  float a;
+
+private:
+  float padding[3];
+
+public:
+  vec4 dummy;
+
+  Settings() : color(1, 1, 1, 1), a(0.5f), dummy(0, 0, 0, 1) {}
+  Settings(vec4 const &color, float const &a, vec4 const &dummy)
+      : color(color), a(a), dummy(dummy) {}
 };
 
 void OutputJoystickData(Joystick const &joystick, Text &text, Uint const &width,
@@ -130,7 +142,7 @@ private:
   UniformBuffer mScreenUBO;
 
   Settings mSettings;
-  ShaderStorageBuffer mSSBO;
+  UniformBuffer mSettingsUniform;
 
 public:
   void SizeCallback(Window *window, int const &width, int const &height) {
@@ -252,9 +264,9 @@ public:
     mUBO.Bind(mShader, "Matrices");
     mScreenUBO.Bind(mScreenShader, "Matrices");
 
-    mSettings = {{1.0f, 1.0f, 1.0f, 0.5f}};
-    mSSBO.LoadData(mSettings);
-    mSSBO.Bind(mShader, "Settings");
+    mSettings = {{1.0f, 1.0f, 1.0f, 1.0f}, 0.5f, {0, 0, 0, 1}};
+    mSettingsUniform.LoadData(mSettings);
+    mSettingsUniform.Bind(mShader, "Settings");
 
     // Uncomment if you want to break your brain...
     /* mShader.UseDepth(false); */
@@ -308,15 +320,19 @@ public:
     mTexture2.Unbind();
     /* mInfoFont.Unuse(); */
     mScreenShader.Unuse();
-    mText.LoadText(L"立方体");
-    auto size = mFont.AcquireTextSize(L"立方体");
+    /* mText.LoadText(L"立方体"); */
+    /* auto size = mFont.AcquireTextSize(L"立方体"); */
+    mText = mTextString;
+    auto size = mFont.AcquireTextSize(mTextString);
     mText.Render(500 - size.first / 2.0, 500 - size.second / 2.0,
                  mScreen.GetWidth(), mScreen.GetHeight());
     mScreen.Unbind();
 
-    mSettings = {
-        {(std::sin(angle) + 1) / 2.0, (std::cos(angle) + 1) / 2.0, 1.0f, 0.5f}};
-    mSSBO.ReloadData(mSettings);
+    mSettings = {{(std::sin(angle) + 1) / 2.0f, (std::cos(angle) + 1) / 2.0f,
+                  1.0f, 1.0f},
+                 0.5f,
+                 {0, 0, 0, 1}};
+    mSettingsUniform.ReloadData(mSettings);
 
     window->Bind();
     mShader.Use();

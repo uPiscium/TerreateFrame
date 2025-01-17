@@ -7,8 +7,10 @@ out vec4 fragColor;
 
 uniform sampler2DArray uTexture;
 
-layout(std430) buffer Settings {
-  vec4 info;
+layout(std140) uniform Settings {
+  vec4 fcolor;
+  float alpha;
+  vec4 dummy;
 };
 
 vec4 sampleTexture(sampler2DArray target, vec2 uv) {
@@ -38,9 +40,12 @@ vec4 sampleFrom(sampler2DArray target, vec2 uv, int layer) {
 void main() {
   // vec4 color = sampleTexture(uTexture, vUV);
   vec4 color = sampleFrom(uTexture, vUV, 0);
-  if (color.a < info.a) {
-    discard;
+  if (color.a < alpha) {
+    fragColor = dummy;
+    return;
+  } else {
+    fragColor = color * fcolor;
+    return;
   }
-  fragColor = color * vec4(info.rgb, 1.0);
   // fragColor = color * factor.z;
 }
